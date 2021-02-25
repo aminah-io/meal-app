@@ -1,5 +1,5 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { 
   View, 
   Text, 
@@ -12,6 +12,7 @@ import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 
 import HeaderButton from '../components/HeaderButton';
 import DefaultText from '../components/DefaultText';
+import { toggleFavorite } from '../store/actions/meals';
 
 const ListItem = props => {
   return (
@@ -22,11 +23,29 @@ const ListItem = props => {
 };
 
 const MealDetailScreen = props => {
+  const availableMeals = useSelector(state => state.meals.meals);
+
   const mealId = props.navigation.getParam('mealId');
-
-  const availableMeals = useSelector(state => state.meals.meals)
-
+  
+  const currentMealIsFavorite = useSelector(state => 
+    state.meals.favMeals.some(meal => meal.id === mealId)
+    );
+    
   const selectedMeal = availableMeals.find(meal => meal.id === mealId);
+
+  const dispatch = useDispatch();
+
+  const toggleFavoriteHandler = useCallback(() => {
+    dispatch(toggleFavorite(mealId));
+  }, [dispatch, mealId]);
+
+  useEffect(() => {
+    props.navigation.setParams({toggleFav: toggleFavoriteHandler});
+  }, [toggleFavoriteHandler]);
+
+  useEffect(() => {
+    props.navigation.setParams({ isFav: currentMealIsFavorite });
+  }, [currentMealIsFavorite])
 
   return (
     <ScrollView>
@@ -37,19 +56,12 @@ const MealDetailScreen = props => {
         <DefaultText>{selectedMeal.affordability.toUpperCase()}</DefaultText>
       </View>
       <Text style={styles.title}>Ingredients</Text>
-        {selectedMeal.ingredients.map(ingredient => (
+      {selectedMeal.ingredients.map(ingredient => (
         <ListItem key={ingredient}>{ingredient}</ListItem>
-        ))}
+      ))}
       <Text style={styles.title}>Instructions</Text>
         {selectedMeal.instructions.map(step => (
         <ListItem key={step}> • {step}</ListItem>))}
-      <View>
-        <Text style={styles.title}>{selectedMeal.title}</Text>
-        <Button title='Go Back to Categories' onPress={() => {
-          props.navigation.popToTop();
-        }} 
-       />
-      </View>
     </ScrollView>
   );
 };
@@ -57,16 +69,18 @@ const MealDetailScreen = props => {
 MealDetailScreen.navigationOptions = navigationData => {
   const mealTitle = navigationData.navigation.getParam('mealTitle');
 
+  const toggleFavorite = navigationData.navigation.getParam('toggleFav');
+
+  const isFavorite = navigationData.navigation.getParam('isFav');
+
   return {
     headerTitle: mealTitle,
     headerRight: (
       <HeaderButtons HeaderButtonComponent={HeaderButton}>
         <Item 
           title='Favorite' 
-          iconName='ios-star' 
-          onPress={() => {
-            console.log('mark as fave');
-          }} 
+          iconName={isFavorite ? 'ios-star' : 'ios-star-outline'}
+          onPress={toggleFavorite} 
         />
       </HeaderButtons>
     )
