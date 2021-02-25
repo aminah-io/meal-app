@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 
 import MealItem from './MealItem';
 
@@ -11,7 +11,8 @@ const MealList = props => {
         props.navigation.navigate({
           routeName: 'MealDetails', 
           params: {
-            mealId: itemData.item.id
+            mealId: itemData.item.id,
+            mealTitle: itemData.item.title
         }});
       }} 
       duration={itemData.item.duration} 
